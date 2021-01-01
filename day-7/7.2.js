@@ -1,4 +1,4 @@
-// https://adventofcode.com/2020/day/7
+// https://adventofcode.com/2020/day/7#part2
 
 // With graph theory help 🙏 from:
 // https://www.youtube.com/watch?v=8qjS-h6ybdo
@@ -11,9 +11,15 @@ const rules = dataGroups[0];
 
 const parseLines = (line) => {
     const [ destination, rest ] = line.split('s contain ');
+    if (rest.slice(0, 3) === 'no ') {
+        return {
+            destination,
+            sources: {}
+        };
+    }
 
     const segments = rest.split(', ');
-    const sources = [];
+    const sources = {};
     for (let i = 0; i < segments.length; i++) {
         const segment = segments[i];
         const amount = Number(segment[0]);
@@ -22,7 +28,7 @@ const parseLines = (line) => {
         if (i === segments.length - 1) {
             source = source.slice(0, -1);
         }
-        sources.push(source);
+        sources[source] = amount;
     }
     return {
         destination,
@@ -34,30 +40,18 @@ const solve = () => {
     const graph = {};
     for (let rule of rules) {
         const { destination, sources } = parseLines(rule);
-        if (!(destination in graph)) {
-            graph[destination] = [];
-        }
-        for (let source of sources) {
-            if (!(source in graph)) {
-                graph[source] = [];
-            }
-            graph[source].push(destination);
-        }
+        graph[destination] = sources;
     }
     console.log(traverse(graph, 'shiny gold bag') - 1);
 };
 
-const traverse = (graph, node, visited = new Set()) => {
-    if (visited.has(node))
-        return 0;
-
-    visited.add(node);
-    
-    let numBagColours = 1;
-    for (let neighbour of graph[node]) {
-        numBagColours += traverse(graph, neighbour, visited);
-    }
-    return numBagColours;
+const traverse = (graph, node) => {
+   let count = 1;
+   for (let neighbour in graph[node]) {
+       const qty = graph[node][neighbour];
+       count += qty * traverse(graph, neighbour);
+   }
+   return count;
 }
 
 solve();
